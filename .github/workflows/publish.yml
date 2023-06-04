@@ -1,0 +1,116 @@
+name: Build and Package Application
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-package:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - platform: 'x86'
+            build_configuration: 'Release'
+          - platform: 'x64'
+            build_configuration: 'Release'
+          - platform: 'ARM64'
+            build_configuration: 'Release'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install vcpkg
+        shell: bash
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.sh
+          ./vcpkg integrate install
+
+      - name: Install Microsoft GSL
+        run: |
+          ./vcpkg/vcpkg install ms-gsl:x86-windows ms-gsl:x64-windows ms-gsl:arm64-windows
+
+      - name: Parse Version
+        shell: bash
+        run: |
+          # Strip "v" prefix from tag name 
+          VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//') 
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Create version resource
+        run: |
+          $version = "${{ env.VERSION }}"
+          $commaVersion = $version -replace '\.', ','
+          $rcContent = Get-Content .\TcpInspector.rc -Raw
+          $rcContent = $rcContent -replace '(?<=VALUE "FileVersion", ")[^"]*', $version
+          $rcContent = $rcContent -replace '(?<=VALUE "ProductVersion", ")[^"]*', $version
+          $rcContent = $rcContent -replace '(?<=FILEVERSION )[\d,]*', $commaVersion
+          $rcContent = $rcContent -replace '(?<=PRODUCTVERSION )[\d,]*', $commaVersion
+          Set-Content .\TcpInspector.rc -Value $rcContent
+        shell: pwsh
+        
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.0.3
+        with:
+          vs-version: '17.0'
+
+      - name: Build
+        run: msbuild TcpInspector.sln -t:rebuild -verbosity:minimal -property:Configuration=Release -p:Platform=${{ matrix.platform }}
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      
+      - name: Move Executable to Root
+        run: |
+          mv "${{ matrix.platform }}\${{ matrix.build_configuration }}\TcpInspector.exe" .
+          rm -r "${{ matrix.platform }}"
+      
+      - name: Package Release
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: 'zip'
+          filename: 'TcpInspector-${{ github.ref_name }}-${{ matrix.platform }}.zip'
+          directory: '.'
+          path: '*.exe'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.platform }}-artifact
+          path: 'TcpInspector-${{ github.ref_name }}-${{ matrix.platform }}.zip'
+
+  upload-release:
+    if: ${{ always() }}
+    needs: build-and-package
+    runs-on: windows-latest
+    steps:
+      - name: Checkout from GitHub
+        uses: actions/checkout@v3
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: 'artifacts'
+
+      - name: Parse Version
+        shell: bash
+        run: |
+          # Strip "v" prefix from tag name 
+          VERSION=$(echo ${{ github.ref_name }} | sed -e 's/^v//') 
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'artifacts/**/*.zip'
+          name: 'TcpInspector-${{ github.ref_name }}'
+          tag: ${{ github.ref_name }}
+          token: ${{ secrets.MY_GITHUB_PAT }}
+          skipIfReleaseExists: true
+        
