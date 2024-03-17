@@ -9,7 +9,7 @@ Import-Module PowerShellForGitHub
 $owner = "wiresock"
 $repository = "TcpInspector"
 $baseURL = "https://github.com/$owner/$repository/releases/download/$versionTag/"
-$files = @("TcpInspector-v0.1.0-ARM64.zip", "TcpInspector-v0.1.0-x64.zip", "TcpInspector-v0.1.0-x86.zip")
+$files = @("TcpInspector-$versionTag-ARM64.zip", "TcpInspector-$versionTag-x64.zip", "TcpInspector-$versionTag-x86.zip")
 
 foreach ($file in $files) {
     $downloadURL = $baseURL + $file
@@ -59,4 +59,3 @@ foreach ($file in Get-ChildItem "./" -Filter "*-signed.zip") {
     $release | New-GitHubReleaseAsset -Path $file.FullName
     Remove-Item -Path $file.FullName -Force
 }
-
