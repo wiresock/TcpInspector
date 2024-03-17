@@ -21,19 +21,68 @@ TcpInspector <target_application_regex> <list_or_drop>
 6. For each TCP session, the utility displays the local and remote IP addresses and ports.
 7. If an error occurs during the session drop process, an error message is displayed.
 
-## Example
+## Demo Run
 
-To list TCP sessions for an application named `firefox.exe` using TcpInspector, run the following command:
+This section provides examples of using TcpInspector to list and drop TCP sessions.
 
+### Listing TCP Sessions
+
+Command to list TCP sessions for Firefox:
 ```
-TcpInspector firefox.exe list
+PS D:\projects\github.com\TcpInspector\x64\Release> ./tcpinspector f.* list
 ```
 
-To drop TCP sessions for the same application, use the following command:
+Output:
+```
+TCP IPv4 sessions for regex pattern: f.*:
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60783 <---> 172.64.154.86 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60633 <---> 80.68.253.2 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 127.0.0.1 : 60572 <---> 127.0.0.1 : 60571
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 127.0.0.1 : 60571 <---> 127.0.0.1 : 60572
+C:\Program Files\Mozilla Firefox\firefox.exe :[4528]: 127.0.0.1 : 60574 <---> 127.0.0.1 : 60573
+C:\Program Files\Mozilla Firefox\firefox.exe :[4528]: 127.0.0.1 : 60573 <---> 127.0.0.1 : 60574
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60580 <---> 140.82.113.26 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60593 <---> 20.88.154.143 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60602 <---> 34.107.243.93 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60603 <---> 34.107.243.93 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60632 <---> 80.68.253.2 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60634 <---> 34.120.208.123 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60680 <---> 185.199.110.154 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60688 <---> 185.199.110.133 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60773 <---> 188.114.99.229 : 443
+C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60784 <---> 172.64.154.86 : 443
+[...other session details...]
+```
 
+### Dropping TCP Sessions
+
+Command to drop TCP sessions for Firefox:
 ```
-TcpInspector firefox.exe drop
+PS D:\projects\github.com\TcpInspector\x64\Release> ./tcpinspector f.* drop
 ```
+
+Output:
+```
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60783 <---> 172.64.154.86 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60633 <---> 80.68.253.2 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 127.0.0.1 : 60572 <---> 127.0.0.1 : 60571
+Failed to drop TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 127.0.0.1 : 60571 <---> 127.0.0.1 : 60572 Error code: 317
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[4528]: 127.0.0.1 : 60574 <---> 127.0.0.1 : 60573
+Failed to drop TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[4528]: 127.0.0.1 : 60573 <---> 127.0.0.1 : 60574 Error code: 317
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60580 <---> 140.82.113.26 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60593 <---> 20.88.154.143 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60602 <---> 34.107.243.93 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60603 <---> 34.107.243.93 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60632 <---> 80.68.253.2 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60634 <---> 34.120.208.123 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60680 <---> 185.199.110.154 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60688 <---> 185.199.110.133 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60773 <---> 188.114.99.229 : 443
+Dropped TCP session: C:\Program Files\Mozilla Firefox\firefox.exe :[7900]: 10.9.0.2 : 60784 <---> 172.64.154.86 : 443
+[...other session details...]
+```
+
+This demonstration shows how TcpInspector effectively lists and drops TCP sessions based on the specified regular expression, providing clear insights into its operation.
 
 ## Credits
 

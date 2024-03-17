@@ -1,3 +1,4 @@
+// ReSharper disable CppUnusedIncludeDirective
 #include <iostream>
 #include <regex>
 #include <string>
@@ -21,7 +22,7 @@
 int wmain(const int argc, wchar_t* argv[]) {
     // Check if the required arguments are provided
     if (argc < 3) {
-        std::wcerr << L"Usage: TcpDrop <target_application_regex> <list_or_drop>\n";
+        std::wcerr << L"Usage: TcpInspector <target_application_regex> <list_or_drop>\n";
         return 1;
     }
 
@@ -41,7 +42,8 @@ int wmain(const int argc, wchar_t* argv[]) {
         std::wstringstream oss;
         std::ranges::for_each(tcp_sessions_v4, [&oss](auto&& entry)
         {
-            oss << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
+			auto process = iphelper::process_lookup<net::ip_address_v4>::get_process_helper().lookup_process_for_tcp<false>(entry);
+            oss << process->path_name << " :[" << process->id << "]: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
                 L" <---> " << std::wstring(entry.remote.ip) << L" : " << entry.remote.port << std::endl;
         });
         std::wcout << L"TCP IPv4 sessions for regex pattern: " << target_app_regex_str << L":\n" << oss.str();
@@ -49,10 +51,11 @@ int wmain(const int argc, wchar_t* argv[]) {
 		oss.str(L"");
 
 		std::ranges::for_each(tcp_sessions_v6, [&oss](auto&& entry)
-			{
-				oss << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
-					L" <---> " << std::wstring(entry.remote.ip) << L" : " << entry.remote.port << std::endl;
-			});
+		{
+			auto process = iphelper::process_lookup<net::ip_address_v6>::get_process_helper().lookup_process_for_tcp<false>(entry);
+			oss << process->path_name << " :[" << process->id << "]: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
+				L" <---> " << std::wstring(entry.remote.ip) << L" : " << entry.remote.port << std::endl;
+		});
 		std::wcout << L"TCP IPv6 sessions for regex pattern: " << target_app_regex_str << L":\n" << oss.str();
     }
 	else if (command == L"drop")
@@ -68,12 +71,13 @@ int wmain(const int argc, wchar_t* argv[]) {
 				row_v4.dwRemoteAddr = entry.remote.ip.S_un.S_addr;
 				row_v4.dwRemotePort = htons(entry.remote.port);
 				row_v4.dwState = MIB_TCP_STATE_DELETE_TCB;
+				auto process = iphelper::process_lookup<net::ip_address_v4>::get_process_helper().lookup_process_for_tcp<false>(entry);
 				if (const auto result = drop_tcp_entry(&row_v4); result != NO_ERROR) {
-					std::wcerr << L"Failed to drop TCP session: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
+					std::wcerr << L"Failed to drop TCP session: " << process->path_name << " :[" << process->id << "]: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
 						L" <---> " << std::wstring(entry.remote.ip) << L" : " << entry.remote.port << L" Error code: " << result << std::endl;
 				}
 				else {
-					std::wcout << L"Dropped TCP session: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
+					std::wcout << L"Dropped TCP session: " << process->path_name << " :[" << process->id << "]: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
 						L" <---> " << std::wstring(entry.remote.ip) << " : " << entry.remote.port << std::endl;
 				}
 				});
@@ -88,18 +92,19 @@ int wmain(const int argc, wchar_t* argv[]) {
 				row_v6.dwRemoteScopeId = entry.remote.scope_id.value_or(0);
 				row_v6.dwRemotePort = htons(entry.remote.port);
 				row_v6.State = MIB_TCP_STATE_DELETE_TCB;
+				auto process = iphelper::process_lookup<net::ip_address_v6>::get_process_helper().lookup_process_for_tcp<false>(entry);
 				if (const auto result = drop_tcp_entry(&row_v6); result != NO_ERROR) {
-					std::wcerr << L"Failed to drop TCP session: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
+					std::wcerr << L"Failed to drop TCP session: " << process->path_name << " :[" << process->id << "]: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
 						L" <---> " << std::wstring(entry.remote.ip) << L" : " << entry.remote.port << L" Error code: " << result << std::endl;
 				}
 				else {
-					std::wcout << L"Dropped TCP session: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
+					std::wcout << L"Dropped TCP session: " << process->path_name << " :[" << process->id << "]: " << std::wstring(entry.local.ip) << L" : " << entry.local.port <<
 						L" <---> " << std::wstring(entry.remote.ip) << L" : " << entry.remote.port << std::endl;
 				}
 				});
 		}
 		catch (const std::exception& e) {
-			std::wcerr << L"Failed to drop TCP sessions: " << e.what() << std::endl;
+			std::wcerr << L"Failed to drop TCP sessions: " << e.what() << '\n';
 		}
 	}
 	else
